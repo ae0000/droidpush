@@ -38,10 +38,10 @@
           <div class="nav-collapse">
             {% if not session.logged_in %}
             <ul class="nav">
-              <li class="active"><a href="#">Home</a></li>
-              <li><a href="{{ url_for('login') }}#about">About</a></li>
-              <li><a href="{{ url_for('register') }}#register">Register</a></li>
-              <li><a href="{{ url_for('login') }}#contact">Contact</a></li>
+              <li{% if homeactive %} class="active"{% endif %}><a href="/">Home</a></li>
+              <li{% if aboutactive %} class="active"{% endif %}><a href="/about">About</a></li>
+              <li{% if registeractive %} class="active"{% endif %}><a href="/register">Register</a></li>
+              <li{% if contactactive %} class="active"{% endif %}><a href="/contact">Contact</a></li>
             </ul>
             <div class="pull-right">
             <a class="btn btn-primary">Sign in</a>

@@ -4,19 +4,26 @@
 <div class="row">
     <div class="span8">
       <h2>Register</h2>
-      <form class="form-horizontal">
+
+      {% for entry in entries %}
+    <li>{{ entry }}
+  {% else %}
+    <li><em>Unbelievable.  No entries here so far</em>
+  {% endfor %}
+
+      <form name="reg" class="form-horizontal" method="POST">
         <fieldset>
           <legend>Create a free account</legend>
           <div class="control-group">
             <label class="control-label" for="email">Email address</label>
             <div class="controls">
-              <input class="input-xlarge focused" id="email" type="email" value="">
+              <input class="input-xlarge focused" name="email" type="email" value="">
             </div>
           </div>
           <div class="control-group">
             <label class="control-label" for="password">Password</label>
             <div class="controls">
-              <input class="input-xlarge focused" id="password" type="password" value="">
+              <input class="input-xlarge focused" name="password" type="password" value="">
               <span class="help-inline">Make it at least 6 characters long.</span>
             </div>
           </div>

@@ -2,6 +2,7 @@ from droidpush import app
 from flaskext.mongokit import MongoKit, Document
 from datetime import datetime
 
+@db.register
 class User(Document):
     __collection__ = 'users'
     __database__ = 'droidpush'
