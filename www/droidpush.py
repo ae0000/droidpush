@@ -11,6 +11,7 @@ from __future__ import with_statement
 from contextlib import closing
 from flaskext.mongokit import MongoKit, Document
 from datetime import datetime
+import re
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
 
@@ -25,25 +26,35 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 app.config.from_envvar('DROIDPUSH_SETTINGS', silent=True)
 
+
+def email_validator(value):
+   email = re.compile(r"(?:^|\s)[-a-z0-9_.]+@(?:[-a-z0-9]+\.)+[a-z]{2,6}(?:\s|$)",re.IGNORECASE)
+   return bool(email.match(value))
+
 # define our db objects
 class User(Document):
     __collection__ = 'users'
     __database__ = 'droidpush'
+    #raise_validation_errors = False
     structure = {
         'email': unicode,
         'password': unicode,
         'created': datetime,
     }
+    validators = {
+        'email': max_length(120)
+    }
     required_fields = ['email', 'password', 'created']
     default_values = {'created': datetime.utcnow}
+    use_dot_notation = True
+
 
 # create the db connection
 db = MongoKit(app)
 db.register([User])
 
-
 @app.route('/')
-def show_entries():
+def home():
     return 'ok';
     # cur = g.db.execute('select title, text from entries order by id desc')
     # entries = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
@@ -52,14 +63,34 @@ def show_entries():
 
 @app.route('/register', methods=['POST','GET'])
 def register():
+    errors = None
+
     if request.method == 'POST':
+
+        try:
+            user = db.User()
+            user.email = request.form[u'email']
+            user.password = request.form[u'password']
+            user.validate()
+        except ValidationError, err:
+            return str(err)
+
+        return 'validate ok'
         user = db.User()
-        return request.form['email']
-        user.email = request.form['email']
-        user.password = request.form['password']
-        user.save()
-        return redirect(url_for('dashboard'))
-    return render_template('register.html', registeractive=True)
+        user.email = request.form[u'email']
+        user.password = request.form[u'password']
+        user.save(validate=True)
+
+        return request.form['password'] + str(user.validation_errors)
+        # Check for validation errors
+        if len(user.validation_errors) == 0:
+            return 'would be saving'
+            return redirect(url_for('dashboard'))
+        else:
+            # return vars(type(user.validation_errors))
+            errors = user.validation_errors
+
+    return render_template('register.html', registeractive=True, errors=errors)
 
 @app.route('/dashboard')
 def dashboard():
