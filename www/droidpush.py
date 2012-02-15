@@ -29,7 +29,8 @@ app.config.from_envvar('DROIDPUSH_SETTINGS', silent=True)
 
 def email_validator(value):
    email = re.compile(r"(?:^|\s)[-a-z0-9_.]+@(?:[-a-z0-9]+\.)+[a-z]{2,6}(?:\s|$)",re.IGNORECASE)
-   return bool(email.match(value))
+   if not bool(email.match(value))
+      raise ValidatorError("%s is not a valid email")
 
 # define our db objects
 class User(Document):
