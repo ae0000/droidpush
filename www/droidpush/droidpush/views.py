@@ -10,9 +10,11 @@
 from __future__ import with_statement
 from droidpush import app
 from contextlib import closing
-from flaskext.mongokit import MongoKit, Document
+from mongokit import *
+from flaskext.login import LoginManager, login_user, login_required, logout_user
 from datetime import datetime
 import re
+import logging
 from models import *
 from forms import *
 from flask import request, session, g, redirect, url_for, abort, \
@@ -20,7 +22,7 @@ from flask import request, session, g, redirect, url_for, abort, \
 
 # configuration
 MONGODB_DATABASE = 'droidpush'
-MONGODB_HOST = 'localhost'
+MONGODB_HOST = '127.0.0.1'
 DEBUG = True
 SECRET_KEY = 'kçfsdf*عربي*v*&$) رئيسرسّ+==H$&maLk?$عرewبي#1 and there it is'
 
@@ -28,17 +30,31 @@ SECRET_KEY = 'kçfsdf*عربي*v*&$) رئيسرسّ+==H$&maLk?$عرewبي#1 and 
 app.config.from_object(__name__)
 app.config.from_envvar('DROIDPUSH_SETTINGS', silent=True)
 
+# setup logging
+#logging.basicConfig(filename='droidpush.log',level=logging.DEBUG)
+
+# setup loginmanager
+login_manager = LoginManager()
+login_manager.setup_app(app)
+
 # create the db connection
-db = MongoKit(app)
+db = Connection()
 db.register([User])
+
+
+@login_manager.user_loader
+def load_user(userid):
+    # get the user form the db
+    collection = db['droidpush'].users
+    user_search = collection.find_one({"_id": ObjectId(userid)})
+
+    user = User()
+    user.set_data(user_search)
+    return user
 
 @app.route('/')
 def home():
-    return 'ok';
-    # cur = g.db.execute('select title, text from entries order by id desc')
-    # entries = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
-    # return render_template('show_entries.html', entries=entries)
-
+    return render_template('home.html', homeactive=True)
 
 @app.route('/register', methods=['POST','GET'])
 def register():
@@ -46,46 +62,35 @@ def register():
     if request.method == 'POST' and form.validate():
         user = db.User()
         user.email = form.email.data
-        user.password = form.password.data
-        user.save()
+        salt_and_hash = hash_password(form.password.data)
+        user.salt = salt_and_hash[0]
+        user.password = salt_and_hash[1]
+        res = user.save()
+        login_user(user)
         flash('Your account has been created.')
         return redirect(url_for('dashboard'))
 
     return render_template('register.html', registeractive=True, form=form)
 
+@app.route('/login', methods=['POST','GET'])
+def login():
+    form = LoginForm(request.form)
+    if request.method == 'POST' and form.validate():
+        # Login user
+        user = form.get_user()
+        login_user(user)
+        return redirect(url_for('dashboard'))
+
+    return render_template('login.html', loginactive=True, form=form)
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    return 'dashboard'
+    return render_template('dashboard.html', dashboardactive=True)
 
-# @app.route('/add', methods=['POST'])
-# def add_entry():
-#     if not session.get('logged_in'):
-#         abort(401)
-#     g.db.execute('insert into entries (title, text) values (?, ?)',
-#                  [request.form['title'], request.form['text']])
-#     g.db.commit()
-#     flash('New entry was successfully posted')
-#     return redirect(url_for('show_entries'))
-
-
-# @app.route('/login', methods=['GET', 'POST'])
-# def login():
-#     error = None
-#     if request.method == 'POST':
-#         if request.form['username'] != app.config['USERNAME']:
-#             error = 'Invalid username'
-#         elif request.form['password'] != app.config['PASSWORD']:
-#             error = 'Invalid password'
-#         else:
-#             session['logged_in'] = True
-#             flash('You were logged in')
-#             return redirect(url_for('show_entries'))
-#     return render_template('login.html', error=error)
-
-
-# @app.route('/logout')
-# def logout():
-#     session.pop('logged_in', None)
-#     flash('You were logged out')
-#     return redirect(url_for('show_entries'))
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out')
+    return redirect(url_for('home'))
