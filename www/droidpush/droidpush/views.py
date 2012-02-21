@@ -69,7 +69,7 @@ def about():
 
 @app.route('/contact')
 def contact():
-    return render_template('contact.html', aboutactive=True)
+    return render_template('contact.html', contactactive=True)
 
 @app.route('/register', methods=['POST','GET'])
 def register():
@@ -108,6 +108,11 @@ def login():
 @login_required
 def dashboard():
     return render_template('dashboard.html', dashboardactive=True)
+
+@app.route('/apikeys')
+@login_required
+def apikeys():
+    return render_template('apikeys.html', apikeysactive=True)
 
 @app.route("/logout")
 @login_required
