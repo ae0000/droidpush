@@ -11,6 +11,7 @@ from __future__ import with_statement
 from droidpush import app
 from contextlib import closing
 from mongokit import *
+from flaskext.gravatar import Gravatar
 from flaskext.login import LoginManager, login_user, login_required, logout_user
 from datetime import datetime
 import re
@@ -41,16 +42,22 @@ login_manager.setup_app(app)
 db = Connection()
 db.register([User])
 
+# setup gravatar
+gravatar = Gravatar(app,
+    size=100,
+    rating='g',
+    default='retro',
+    force_default=False,
+    force_lower=False)
 
 @login_manager.user_loader
 def load_user(userid):
-    # get the user form the db
-    collection = db['droidpush'].users
-    user_search = collection.find_one({"_id": ObjectId(userid)})
-
+    # load the user from the model
     user = User()
-    user.set_data(user_search)
-    return user
+    if user.load_user(userid):
+        return user
+    else:
+        return None
 
 @app.route('/')
 def home():
@@ -65,10 +72,15 @@ def register():
         salt_and_hash = hash_password(form.password.data)
         user.salt = salt_and_hash[0]
         user.password = salt_and_hash[1]
-        res = user.save()
-        login_user(user)
-        flash('Your account has been created.')
-        return redirect(url_for('dashboard'))
+        user.save()
+
+        # now, log the user in
+        if user.validate_login(form.email.data,form.password.data):
+            # login credentials all good, set the user (which has now been
+            # populated with the user details)
+            login_user(user)
+            flash('Your account has been created.')
+            return redirect(url_for('dashboard'))
 
     return render_template('register.html', registeractive=True, form=form)
 
@@ -76,9 +88,10 @@ def register():
 def login():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
-        # Login user
+        # Login user, check for remember me
+        remember_me =  form.remember.data == 'y'
         user = form.get_user()
-        login_user(user)
+        login_user(user, remember=remember_me)
         return redirect(url_for('dashboard'))
 
     return render_template('login.html', loginactive=True, form=form)

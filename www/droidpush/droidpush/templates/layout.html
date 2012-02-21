@@ -13,7 +13,7 @@
     <![endif]-->
 
     <!-- Le styles -->
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
     <link href="/static/css/bootstrap-responsive.css" rel="stylesheet">
     <link href="/static/css/droidalert.css" rel="stylesheet">
 
@@ -36,8 +36,19 @@
           </a>
           <a class="brand" href="#">Droidpush</a>
           <div class="nav-collapse">
-            {% if not session.logged_in %}
+            {% if current_user.is_authenticated() %}
             <ul class="nav">
+              <li{% if homeactive %} class="active"{% endif %}><a href="/dashboard">Dashboard</a></li>
+              <li{% if aboutactive %} class="active"{% endif %}><a href="/about">About</a></li>
+              <li{% if contactactive %} class="active"{% endif %}><a href="/contact">Contact</a></li>
+            </ul>
+            <div class="pull-right">
+              <span class="face">Logged in as {{ current_user.get_email() }} </span>
+              <img class="face" width="40" height="40" src="{{ current_user.get_email() | gravatar(size=40) }}" />
+              <a class="btn btn-warning" href="/logout">Logout</a>
+            </div>
+            {% else %}
+             <ul class="nav">
               <li{% if homeactive %} class="active"{% endif %}><a href="/">Home</a></li>
               <li{% if aboutactive %} class="active"{% endif %}><a href="/about">About</a></li>
               <li{% if registeractive %} class="active"{% endif %}><a href="/register">Register</a></li>
@@ -46,9 +57,6 @@
             <div class="pull-right">
               <a class="btn btn-warning" href="/login">Login</a>
             </div>
-
-            {% else %}
-                <a href="{{ url_for('logout') }}">log out</a>
             {% endif %}
           </div><!--/.nav-collapse -->
         </div>

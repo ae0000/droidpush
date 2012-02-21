@@ -38,6 +38,7 @@ class LoginForm(Form):
         validators.Required(),
         validators.Length(min=6, max=200),
     ])
+    remember = BooleanField('Remember me', [])
 
     def __init__(self, *args, **kwargs):
         Form.__init__(self, *args, **kwargs)

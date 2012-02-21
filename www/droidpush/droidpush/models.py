@@ -57,6 +57,15 @@ class User(Document):
     def set_data(self, user_data):
         self.user_data = user_data
 
+    # load the user in via the user_id (_id)
+    def load_user(self, userid):
+        user_search = db.users.find_one({"_id": ObjectId(userid)})
+        if user_search == None:
+            return False
+        else:
+            self.set_data(user_search)
+            return True
+
     # this is called by the forms to validate the login credentials
     def validate_login(self, email, raw_password):
         user_search = db.users.find_one({"email": email, "status": 1})
@@ -75,6 +84,12 @@ class User(Document):
         else:
             return False
 
+    # just returns the email address
+    def get_email(self):
+        if self.user_data != None:
+            return self.user_data['email']
+        else:
+            return None
 
     # this function is required by the login manager
     def get_id(self):
