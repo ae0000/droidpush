@@ -63,6 +63,14 @@ def load_user(userid):
 def home():
     return render_template('home.html', homeactive=True)
 
+@app.route('/about')
+def about():
+    return render_template('about.html', aboutactive=True)
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html', aboutactive=True)
+
 @app.route('/register', methods=['POST','GET'])
 def register():
     form = RegistrationForm(request.form)
