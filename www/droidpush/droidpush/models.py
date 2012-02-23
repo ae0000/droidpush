@@ -3,6 +3,7 @@ from mongokit import *
 from flaskext.mongokit import MongoKit
 from datetime import datetime
 import os
+import random
 import hashlib
 import base64
 from droidpush import app
@@ -33,6 +34,32 @@ def check_password(raw_password, enc_password, salt):
         compare |= ord(a) ^ ord(b)
 
     return compare == 0
+
+class Apikey(Document):
+    __collection__ = 'apikeys'
+    __database__ = 'droidpush'
+
+    structure = {
+        'userid': unicode,
+        'key': unicode,
+        'name': unicode,
+        'created': datetime,
+        'accessed': int,
+        'status': int
+    }
+    required_fields = ['userid', 'key', 'name', 'created', 'accessed', 'status']
+    default_values = {
+        'key': u''.join(random.choice('2345679ACDEFHJKLMNPRSTUVWXYZ') for i in xrange(32)),
+        'name': u'Just the default apikey',
+        'created': datetime.utcnow,
+        'accessed': 0, 
+        'status': 1
+    }
+    use_dot_notation = True
+
+    # find the apikeys for a user
+    def find_by_user(self, userid):
+        return db.apikeys.find({"userid": userid})
 
 
 class User(Document):

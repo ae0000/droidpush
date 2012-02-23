@@ -68,3 +68,10 @@ class LoginForm(Form):
         else:
             self.email.errors.append(error_message)
             return False
+
+
+class ApikeyscreateForm(Form):
+    name = TextField('Name', [
+        validators.Required(),
+        validators.Length(min=1, max=200)
+    ])

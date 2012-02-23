@@ -12,7 +12,8 @@ from droidpush import app
 from contextlib import closing
 from mongokit import *
 from flaskext.gravatar import Gravatar
-from flaskext.login import LoginManager, login_user, login_required, logout_user
+from flaskext.login import LoginManager, login_user, login_required, \
+    current_user, logout_user
 from datetime import datetime
 import re
 import logging
@@ -40,7 +41,7 @@ login_manager.setup_app(app)
 
 # create the db connection
 db = Connection()
-db.register([User])
+db.register([User,Apikey])
 
 # setup gravatar
 gravatar = Gravatar(app,
@@ -87,6 +88,13 @@ def register():
             # login credentials all good, set the user (which has now been
             # populated with the user details)
             login_user(user)
+
+            # we also need to create the default apikey too
+            apikey = db.Apikey()
+            apikey.userid = unicode(user.get_id())
+            apikey.save()
+
+            # all good, lets go to the dashboard with a flash
             flash('Your account has been created.')
             return redirect(url_for('dashboard'))
 
@@ -112,7 +120,27 @@ def dashboard():
 @app.route('/apikeys')
 @login_required
 def apikeys():
-    return render_template('apikeys.html', apikeysactive=True)
+    apikey = db.Apikey()
+    apikeys = apikey.find_by_user(current_user.get_id())
+
+    return render_template('apikeys.html', apikeysactive=True, apikeys=apikeys)
+
+@app.route('/apikeys/create', methods=['POST','GET'])
+@login_required
+def apikeyscreate():
+    form = ApikeyscreateForm(request.form)
+    if request.method == 'POST' and form.validate():
+        apikey = db.Apikey()
+        apikey.name = form.name.data
+        apikey.userid = unicode(current_user.get_id())
+        apikey.save()
+
+        # all good, lets go to the dashboard with a flash
+        flash('Your apikey has been created.')
+        return redirect(url_for('apikeys'))
+
+    return render_template('apikeyscreate.html', form=form)
+
 
 @app.route("/logout")
 @login_required
