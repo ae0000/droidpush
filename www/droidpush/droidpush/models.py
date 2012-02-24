@@ -59,7 +59,14 @@ class Apikey(Document):
 
     # find the apikeys for a user
     def find_by_user(self, userid):
-        return db.apikeys.find({"userid": userid})
+        return db.apikeys.find({"userid": userid, "status": 1})
+
+    # validate that the apikey is owned by the given user
+    def user_has_access_to_apikey(self, userid, apikeyid):
+        return db.apikeys.find_one({
+            "userid": userid, 
+            "status": 1, 
+            "_id": ObjectId(apikeyid) })
 
 
 class User(Document):

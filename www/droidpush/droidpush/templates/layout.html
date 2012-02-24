@@ -39,8 +39,9 @@
             {% if current_user.is_authenticated() %}
             <ul class="nav">
               <li{% if dashboardactive %} class="active"{% endif %}><a href="/dashboard">Dashboard</a></li>
-              <li{% if aboutactive %} class="active"{% endif %}><a href="/about">About</a></li>
               <li{% if apikeysactive %} class="active"{% endif %}><a href="/apikeys">Apikeys</a></li>
+              <li{% if servicesactive %} class="active"{% endif %}><a href="/services">Services</a></li>
+              <li{% if aboutactive %} class="active"{% endif %}><a href="/about">About</a></li>
               <li{% if contactactive %} class="active"{% endif %}><a href="/contact">Contact</a></li>
             </ul>
             <div class="pull-right">
@@ -52,11 +53,13 @@
              <ul class="nav">
               <li{% if homeactive %} class="active"{% endif %}><a href="/">Home</a></li>
               <li{% if aboutactive %} class="active"{% endif %}><a href="/about">About</a></li>
+              <li{% if servicesactive %} class="active"{% endif %}><a href="/services">Services</a></li>
               <li{% if registeractive %} class="active"{% endif %}><a href="/register">Register</a></li>
               <li{% if contactactive %} class="active"{% endif %}><a href="/contact">Contact</a></li>
             </ul>
             <div class="pull-right">
               <a class="btn btn-warning" href="/login">Login</a>
+              <a class="btn btn-primary" href="/register">Register</a>
             </div>
             {% endif %}
           </div><!--/.nav-collapse -->
@@ -65,12 +68,20 @@
     </div>
 
     <div class="container">
-      {% for message in get_flashed_messages() %}
-      <div class="alert alert-info">
-        <a class="close" data-dismiss="alert">×</a>
-        {{ message }}
-      </div>
-      {% endfor %}
+      {% with flashes = get_flashed_messages() %}
+        {% if flashes %}
+        <div class="row">
+          <div class="span8">
+          {% for message in get_flashed_messages() %}
+            <div class="alert alert-info fade in ">
+              <a class="close" data-dismiss="alert">×</a>
+              {{ message }}
+            </div>
+          {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      {% endwith %}
 
     {% block body %}{% endblock %}
 
