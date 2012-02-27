@@ -131,6 +131,7 @@ def apikeyscreate():
     if request.method == 'POST' and form.validate():
         apikey = db.Apikey()
         apikey.name = form.name.data
+        apikey.key = apikey.random_key()
         apikey.userid = unicode(current_user.get_id())
         apikey.save()
 
@@ -153,6 +154,22 @@ def apikeysdelete(id):
 
     return render_template('apikeysdelete.html', name=key['name'], id=id)
 
+@app.route('/apikeys/deleteconfirmed/<id>')
+@login_required
+def apikeysdeleteconfirmed(id):
+    # we need to check that the apikey id belongs to this user
+    apikey = db.Apikey()
+    key = apikey.user_has_access_to_apikey(unicode(current_user.get_id()), id)
+
+    if key == None:
+        flash('You do not have access to that apikey!')
+        return redirect(url_for('apikeys'))
+
+    apikey.delete(id)
+    flash('The apikey has been deleted')
+
+    return redirect(url_for('apikeys'))
+
 
 @app.route("/logout")
 @login_required
@@ -161,7 +178,22 @@ def logout():
     flash('You have been logged out')
     return redirect(url_for('home'))
 
+@app.route('/messages/create', methods=['POST','GET'])
+@login_required
+def messagescreate():
+    form = MessagescreateForm(request.form)
+    if request.method == 'POST' and form.validate():
+        apikey = db.Apikey()
+        apikey.name = form.name.data
+        apikey.key = apikey.random_key()
+        apikey.userid = unicode(current_user.get_id())
+        apikey.save()
 
+        # all good, lets go to the dashboard with a flash
+        flash('Your apikey has been created.')
+        return redirect(url_for('apikeys'))
+
+    return render_template('apikeyscreate.html', form=form)
 @app.route("/services")
 def services():
     return render_template('services.html', servicesactive=True)

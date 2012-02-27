@@ -1,9 +1,26 @@
 {% extends "layout.html" %}
 {% block body %}
-{% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
-  <div class="row">
+<div class="row">
+	<div class="page-header">
+		<h1>Dashboard <small>Welcome back</small></h1>
+	</div>	
     <div class="span8">
-      <h2>Dashboard</h2>
+      {% if messages %}
+      <h3>Your current messages</h3>
+        
+          {% for message in messages %}
+            <div class="alert alert-{{message.type}} fade in ">
+              <a class="close" data-dismiss="alert">×</a>
+              <h4 class="alert-heading">{{message.heading}}</h4>
+              {{ message.blurb }} <br/>
+              <a href="#">Read more?</a>
+            </div>
+          {% endfor %}
+      
+        {% else %}
+        <h3>Looks like you don't have any messages yet</h3>
+        <p>Would you like to <a href="/messagescreate">create a test one</a>?</p>
+        {% endif %}
     </div>
-  </div>
+</div>
 {% endblock %}

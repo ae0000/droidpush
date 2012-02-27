@@ -75,3 +75,21 @@ class ApikeyscreateForm(Form):
         validators.Required(),
         validators.Length(min=1, max=200)
     ])
+
+
+class MessagescreateForm(Form):
+    level = TextField('Type', [
+        validators.Required(),
+        validators.Length(min=1, max=200)
+    ])
+    heading = TextField('Heading', [
+        validators.Required(),
+        validators.Length(min=1, max=50)
+    ])
+    blurb = TextField('Blurb', [
+        validators.Required(),
+        validators.Length(min=1, max=100)
+    ])
+    body = TextField('Message', [
+        validators.Length(min=0, max=5000)
+    ])

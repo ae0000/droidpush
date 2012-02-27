@@ -72,7 +72,7 @@
         {% if flashes %}
         <div class="row">
           <div class="span8">
-          {% for message in get_flashed_messages() %}
+          {% for message in flashes %}
             <div class="alert alert-info fade in ">
               <a class="close" data-dismiss="alert">×</a>
               {{ message }}

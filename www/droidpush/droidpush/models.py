@@ -8,6 +8,12 @@ import hashlib
 import base64
 from droidpush import app
 
+# document statuses (as bits)
+ACTIVE = 1
+PENDING = 2
+DELETED = 4
+BANNED = 8
+
 db = MongoKit(app)
 
 def hash_password(password):
@@ -49,13 +55,20 @@ class Apikey(Document):
     }
     required_fields = ['userid', 'key', 'name', 'created', 'accessed', 'status']
     default_values = {
-        'key': u''.join(random.choice('2345679ACDEFHJKLMNPRSTUVWXYZ') for i in xrange(32)),
         'name': u'Just the default apikey',
         'created': datetime.utcnow,
         'accessed': 0, 
         'status': 1
     }
     use_dot_notation = True
+
+    # create random key
+    def random_key(self):
+        key = u''.join(random.choice('2345679ACDEFHJKLMNPRSTUVWXYZ') \
+            for i in xrange(32))
+
+        # TODO check that it doesn't already exist
+        return key
 
     # find the apikeys for a user
     def find_by_user(self, userid):
@@ -67,6 +80,12 @@ class Apikey(Document):
             "userid": userid, 
             "status": 1, 
             "_id": ObjectId(apikeyid) })
+
+    # change the status of the apikey (so it is "deleted")
+    def delete(self,apikeyid):
+        return db.apikeys.find_and_modify(
+            {"_id": ObjectId(apikeyid)},
+            {'$set':{'status':4}})
 
 
 class User(Document):
@@ -84,7 +103,7 @@ class User(Document):
         'status': int
     }
     required_fields = ['email', 'password', 'salt', 'created']
-    default_values = {'created': datetime.utcnow, 'status': 1}
+    default_values = {'created': datetime.utcnow, 'status': ACTIVE}
     use_dot_notation = True
 
     # this loads in the actual user (from the db)
@@ -102,7 +121,7 @@ class User(Document):
 
     # this is called by the forms to validate the login credentials
     def validate_login(self, email, raw_password):
-        user_search = db.users.find_one({"email": email, "status": 1})
+        user_search = db.users.find_one({"email": email, "status": ACTIVE})
         if user_search == None:
             return None
 
@@ -142,7 +161,7 @@ class User(Document):
 
     # this function is required by the login manager
     def is_active(self):
-        if self.user_data != None and self.user_data['status'] == 1:
+        if self.user_data != None and self.user_data['status'] == ACTIVE:
             return True;
         else:
             return False
