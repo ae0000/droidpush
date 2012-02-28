@@ -12,7 +12,8 @@ from droidpush import app
 ACTIVE = 1
 PENDING = 2
 DELETED = 4
-BANNED = 8
+ARCHIVED = 8
+BANNED = 16
 
 db = MongoKit(app)
 
@@ -72,7 +73,7 @@ class Apikey(Document):
 
     # find the apikeys for a user
     def find_by_user(self, userid):
-        return db.apikeys.find({"userid": userid, "status": 1})
+        return db.apikeys.find({"userid": userid, "status": ACTIVE})
 
     # validate that the apikey is owned by the given user
     def user_has_access_to_apikey(self, userid, apikeyid):
@@ -85,7 +86,7 @@ class Apikey(Document):
     def delete(self,apikeyid):
         return db.apikeys.find_and_modify(
             {"_id": ObjectId(apikeyid)},
-            {'$set':{'status':4}})
+            {'$set':{'status': DELETED}})
 
 
 class User(Document):
@@ -172,3 +173,53 @@ class User(Document):
             return True;
         else:
             return False
+
+
+class Message(Document):
+    __collection__ = 'messages'
+    __database__ = 'droidpush'
+
+    structure = {
+        'userid': unicode,
+        'apikeyid': unicode,
+        'level': unicode,
+        'heading': unicode,
+        'blurb': unicode,
+        'body': unicode,
+        'created': datetime,
+        'status': int
+    }
+    required_fields = ['userid', 'apikeyid', 'level', 'heading', 'blurb',
+        'body', 'created', 'status']
+    default_values = {
+        'level': u'info',
+        'created': datetime.utcnow,
+        'status': 1
+    }
+    use_dot_notation = True
+
+    # find the messages for a user
+    def find_by_user(self, userid):
+        return db.messages.find({"userid": userid, "status": ACTIVE})
+
+    # validate that the apikey is owned by the given user
+    def user_has_access_to_message(self, userid, messageid):
+        app.logger.error('userid: '+ userid)
+        app.logger.error('status: '+ str(ACTIVE))
+        app.logger.error('messageid: ' + messageid)
+        return db.messages.find_one({
+            "userid": userid, 
+            "status": ACTIVE, 
+            "_id": ObjectId(messageid) })
+
+    # change the status of the apikey (so it is "deleted")
+    def delete(self,messageid):
+        return db.messages.find_and_modify(
+            {"_id": ObjectId(messageid)},
+            {'$set':{'status': DELETED}})
+
+    # change the status of the apikey (so it is "archived")
+    def archive(self,messageid):
+        return db.messages.find_and_modify(
+            {"_id": ObjectId(messageid)},
+            {'$set':{'status': ARCHIVED}})

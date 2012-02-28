@@ -4,6 +4,8 @@ from flaskext.wtf.html5 import EmailField
 from flaskext.mongokit import MongoKit
 from droidpush import app
 from droidpush.models import check_password, User
+from flaskext.login import current_user
+from mongokit import ObjectId
 
 db = MongoKit(app)
 
@@ -77,6 +79,13 @@ class ApikeyscreateForm(Form):
     ])
 
 
+def user_has_access_to_apikey(form, field):
+    # Check to see if this user has access to this apikey
+    apikey_search = db.apikeys.find_one(
+        {"userid": unicode(current_user.get_id()), "_id": ObjectId(field.data)})
+    if apikey_search == None:
+        raise ValidationError('That apikey is invalid!')
+
 class MessagescreateForm(Form):
     level = TextField('Type', [
         validators.Required(),
@@ -92,4 +101,8 @@ class MessagescreateForm(Form):
     ])
     body = TextField('Message', [
         validators.Length(min=0, max=5000)
+    ])
+    apikeyid = TextField('Apikey', [
+        validators.Required(),
+        user_has_access_to_apikey       
     ])

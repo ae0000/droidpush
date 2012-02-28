@@ -41,7 +41,7 @@ login_manager.setup_app(app)
 
 # create the db connection
 db = Connection()
-db.register([User,Apikey])
+db.register([User,Apikey,Message])
 
 # setup gravatar
 gravatar = Gravatar(app,
@@ -115,7 +115,10 @@ def login():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', dashboardactive=True)
+    message = db.Message()
+    messages = message.find_by_user(current_user.get_id())
+
+    return render_template('dashboard.html', dashboardactive=True, messages=messages)
 
 @app.route('/apikeys')
 @login_required
@@ -144,12 +147,19 @@ def apikeyscreate():
 @app.route('/apikeys/delete/<id>')
 @login_required
 def apikeysdelete(id):
-    # we need to check that the apikey id belongs to this user
     apikey = db.Apikey()
-    key = apikey.user_has_access_to_apikey(unicode(current_user.get_id()), id)
 
+    # we need to check that the apikey id belongs to this user
+    key = apikey.user_has_access_to_apikey(unicode(current_user.get_id()), id)
     if key == None:
         flash('You do not have access to that apikey!')
+        return redirect(url_for('apikeys'))
+
+    # Check that this won't leave them without a apikey
+    keys = apikey.find_by_user(unicode(current_user.get_id()))
+    if keys.count() == 1:
+        flash('You can\'t delete all your keys... else whats the point? You \
+            need to keep at least one at all times.')
         return redirect(url_for('apikeys'))
 
     return render_template('apikeysdelete.html', name=key['name'], id=id)
@@ -183,17 +193,36 @@ def logout():
 def messagescreate():
     form = MessagescreateForm(request.form)
     if request.method == 'POST' and form.validate():
-        apikey = db.Apikey()
-        apikey.name = form.name.data
-        apikey.key = apikey.random_key()
-        apikey.userid = unicode(current_user.get_id())
-        apikey.save()
+        message = db.Message()
+        message.level = form.level.data
+        message.heading = form.heading.data
+        message.blurb = form.blurb.data
+        message.body = form.body.data
+        message.userid = unicode(current_user.get_id())
+        message.apikeyid = unicode(form.apikeyid.data)
+        message.save()
 
         # all good, lets go to the dashboard with a flash
-        flash('Your apikey has been created.')
-        return redirect(url_for('apikeys'))
+        flash('Your message has been created.')
+        return redirect(url_for('dashboard'))
 
-    return render_template('apikeyscreate.html', form=form)
+    return render_template('messagescreate.html', form=form)
+
+@app.route('/messages/archive/<id>')
+@login_required
+def messagesarchive(id):
+    # we need to check that the message id belongs to this user
+    message = db.Message()
+    m = message.user_has_access_to_message(unicode(current_user.get_id()), id)
+
+    if m == None:
+        flash('You do not have access to that apikey!')
+        return redirect(url_for('dashboard'))
+
+    message.archive(id)
+
+    return redirect(url_for('dashboard'))
+
 @app.route("/services")
 def services():
     return render_template('services.html', servicesactive=True)

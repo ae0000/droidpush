@@ -5,21 +5,22 @@
 		<h1>Dashboard <small>Welcome back</small></h1>
 	</div>	
     <div class="span8">
-      {% if messages %}
+      {% if messages.count() > 0 %}
       <h3>Your current messages</h3>
         
           {% for message in messages %}
-            <div class="alert alert-{{message.type}} fade in ">
-              <a class="close" data-dismiss="alert">×</a>
+            <div class="alert alert-{{message.level}} fade in ">
+              <a class="close" data-dismiss="alert" href="/messages/archive/{{message._id}}">×</a>
               <h4 class="alert-heading">{{message.heading}}</h4>
               {{ message.blurb }} <br/>
               <a href="#">Read more?</a>
             </div>
           {% endfor %}
       
+        <p>Would you like to <a href="/messages/create">create a test message?<a>?</p>
         {% else %}
         <h3>Looks like you don't have any messages yet</h3>
-        <p>Would you like to <a href="/messagescreate">create a test one</a>?</p>
+        <p>Would you like to <a href="/messages/create">create a test one</a>?</p>
         {% endif %}
     </div>
 </div>
