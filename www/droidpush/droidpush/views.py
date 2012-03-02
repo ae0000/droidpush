@@ -20,7 +20,7 @@ import logging
 from models import *
 from forms import *
 from flask import request, session, g, redirect, url_for, abort, \
-     render_template, flash
+     render_template, flash, jsonify
 
 # configuration
 MONGODB_DATABASE = 'droidpush'
@@ -91,6 +91,7 @@ def register():
 
             # we also need to create the default apikey too
             apikey = db.Apikey()
+            apikey.key = apikey.random_key()
             apikey.userid = unicode(user.get_id())
             apikey.save()
 
@@ -226,3 +227,26 @@ def messagesarchive(id):
 @app.route("/services")
 def services():
     return render_template('services.html', servicesactive=True)
+
+
+@app.route('/api/messages/create', methods=['POST'])
+def apimessagescreate():
+    form = MessagescreateApi(request.form)
+    if request.method == 'POST' and form.validate():
+        message = db.Message()
+        message.level = form.level.data
+        message.heading = form.heading.data
+        message.blurb = form.blurb.data
+        message.body = form.body.data
+        message.userid = unicode(current_user.get_id())
+        message.apikeyid = unicode(form.apikeyid.data)
+        message.save()
+        return 'all good'
+    else:
+        return jsonify(form.errors)
+
+
+@app.route("/api/test", methods=['POST','GET'])
+def api():
+    a = [1,2,3]
+    return jsonify(request.headers)
