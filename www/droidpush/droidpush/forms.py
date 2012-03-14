@@ -78,7 +78,6 @@ class ApikeyscreateForm(Form):
         validators.Length(min=1, max=200)
     ])
 
-
 def user_has_access_to_apikey(form, field):
     # Check to see if this user has access to this apikey
     apikey_search = db.apikeys.find_one(
@@ -105,4 +104,47 @@ class MessagescreateForm(Form):
     apikeyid = TextField('Apikey', [
         validators.Required(),
         user_has_access_to_apikey       
+    ])
+
+
+def valid_apikey(form, field):
+    # Check to see if this user has access to this apikey
+    apikey_search = db.apikeys.find_one(
+        {"key": field.data, "status": 1})
+    if apikey_search == None:
+        raise ValidationError('That apikey is invalid!')
+    else:
+        form.apikeyid = str(apikey_search['_id'])
+        form.userid = apikey_search['userid']
+
+class MessagescreateApi(Form):
+    level = TextField('Type', [
+        validators.Required(),
+        validators.Length(min=1, max=200)
+    ])
+    heading = TextField('Heading', [
+        validators.Required(),
+        validators.Length(min=1, max=50)
+    ])
+    blurb = TextField('Blurb', [
+        validators.Required(),
+        validators.Length(min=1, max=100)
+    ])
+    body = TextField('Message', [
+        validators.Length(min=0, max=5000)
+    ])
+    apikey = TextField('Apikey', [
+        validators.Required(),
+        valid_apikey
+    ])
+
+
+class MessagesgetApi(Form):
+    apikey = TextField('Apikey', [
+        validators.Required(),
+        valid_apikey
+    ])
+    limit = TextField('Limit', [
+        
+
     ])

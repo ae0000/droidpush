@@ -238,15 +238,54 @@ def apimessagescreate():
         message.heading = form.heading.data
         message.blurb = form.blurb.data
         message.body = form.body.data
-        message.userid = unicode(current_user.get_id())
-        message.apikeyid = unicode(form.apikeyid.data)
+        message.userid = unicode(form.userid)
+        message.apikeyid = unicode(form.apikeyid)
         message.save()
-        return 'all good'
+        return jsonify({"status": "ok"})
     else:
         return jsonify(form.errors)
 
 
-@app.route("/api/test", methods=['POST','GET'])
-def api():
-    a = [1,2,3]
-    return jsonify(request.headers)
+@app.route('/api/messages/get', methods=['POST'])
+def apimessagesget():
+    form = MessagesgetApi(request.form)
+    if request.method == 'POST' and form.validate():
+        message = db.Message()
+        messages = message.find_by_user(unicode(form.userid))
+        a = []
+        for m in messages:
+            a.append({
+                'id': str(m['_id']),
+                'heading': m['heading'],
+                'level': m['level'],
+                'blurb': m['blurb'],
+                'body': m['body'],
+                'created': str(m['created'])
+                })
+
+        return jsonify({'status': 'ok', 'messages': a})
+    else:
+        return jsonify(form.errors)
+
+
+# @app.route('/api/messages/archive/<id>', methods=['POST'])
+# def apimessagesarchive():
+#     form = MessagesarchiveApi(request.form)
+#     if request.method == 'POST' and form.validate():
+#         message = db.Message()
+#         messages = message.find_by_user(unicode(form.userid))
+#         a = []
+#         for m in messages:
+#             a.append({
+#                 'id': str(m['_id']),
+#                 'heading': m['heading'],
+#                 'level': m['level'],
+#                 'blurb': m['blurb'],
+#                 'body': m['body'],
+#                 'created': str(m['created'])
+#                 })
+
+#         return jsonify({'status': 'ok', 'messages': a})
+#     else:
+#         return jsonify(form.errors)
+

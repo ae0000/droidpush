@@ -1,7 +1,7 @@
 # create message
 
 curl http://127.0.0.1:5000/api/messages/create \
-	-d apikey=HAD7LPACVVA4VAAARVX756UKKLCZVF9F \
+	-d apikey="HAD7LPACVVA4VAAARVX756UKKLCZVF9F" \
 	-d blurb="blurrrb" \
 	-d heading="heading" \
 	-d body="this is the body" \
